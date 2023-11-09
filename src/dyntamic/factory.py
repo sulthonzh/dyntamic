@@ -57,17 +57,21 @@ class DyntamicFactory:
                     items = self.raw_fields[field].get('items')
                     if '$ref' in items:
                         model_name = items.get('$ref')
-                        self._make_nested(model_name, field)
-                self._make_field(factory, field, self.raw_fields.get('title'))
+                        self._make_nested(model_name, field, True)
+                else:
+                    self._make_field(factory, field, self.raw_fields.get('title'))
         return create_model(self.class_name, __base__=self._base_model, **self.model_fields)
 
-    def _make_nested(self, model_name: str, field) -> None:
+    def _make_nested(self, model_name: str, field, is_list:bool = False) -> None:
         """Create a nested model"""
         level = DyntamicFactory({self.ref_template: self.definitions} | self.definitions.get(model_name),
                                 ref_template=self.ref_template)
         level.make()
         model = create_model(model_name, **level.model_fields)
-        self._make_field(model, field, field)
+        if is_list:
+            self._make_field(list[model], field, field)
+        else:
+            self._make_field(model, field, field)
 
     def _make_field(self, factory, field, alias) -> None:
         """Create an annotated field"""
