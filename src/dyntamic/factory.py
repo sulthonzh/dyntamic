@@ -55,8 +55,9 @@ class DyntamicFactory:
                 factory = self.TYPES.get(self.raw_fields[field].get('type'))
                 if factory == list:
                     items = self.raw_fields[field].get('items')
-                    if self.ref_template in items:
-                        self._make_nested(items.get(self.ref_template), field)
+                    if '$ref' in items:
+                        model_name = items.get('$ref')
+                        self._make_nested(model_name, field)
                 self._make_field(factory, field, self.raw_fields.get('title'))
         return create_model(self.class_name, __base__=self._base_model, **self.model_fields)
 
@@ -70,7 +71,7 @@ class DyntamicFactory:
 
     def _make_field(self, factory, field, alias) -> None:
         """Create an annotated field"""
-        if field not in self.required:
+        if not self.required or field not in self.required:
             factory_annotation = Annotated[Union[factory | None], factory]
         else:
             factory_annotation = factory
